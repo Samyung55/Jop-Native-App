@@ -6,39 +6,43 @@ const useFetch = (endpoint, query) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const options = {
-    method: "GET",
-    url: `https://jsearch.p.rapidapi.com/${endpoint}`,
-    headers: {
-      "X-RapidAPI-Key": '7b63a42ed4msha215d4e2fb17099p17ae62jsn0f42bd187691',
-      "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
-    },
-    params: { ...query },
-  };
-
-  const fetchData = async () => {
-    setIsLoading(true);
-
-    try {
-      const response = await axios.request(options);
-
-      setData(response.data.data);
-      setIsLoading(false);
-    } catch (error) {
-      setError(error);
-      console.log(error)
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      try {
+        const response = await axios.get(`https://remote-jobs-api.p.rapidapi.com/${endpoint}`, {
+          params: { ...query },
+          headers: {
+            'X-RapidAPI-Key': '7b63a42ed4msha215d4e2fb17099p17ae62jsn0f42bd187691',
+            'X-RapidAPI-Host': 'remote-jobs-api.p.rapidapi.com'
+          }
+        });
+
+        if (isMounted) {
+          setData(response.data);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setError(error);
+          setIsLoading(false);
+        }
+        console.log(error);
+      }
+    };
+
     fetchData();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [endpoint, query]);
 
   const refetch = () => {
     setIsLoading(true);
-    fetchData();
   };
 
   return { data, isLoading, error, refetch };
